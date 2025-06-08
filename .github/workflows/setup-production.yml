@@ -1,0 +1,50 @@
+name: "Setup Production Environment"
+env:
+  SSH_KEY: ${{ secrets.SSH_KEY }}
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  REGISTRY: ghcr.io
+  IMAGE: luoibac.studio
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Wagtail image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./deploy/wagtail
+          file: ./deploy/wagtail/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest
+
+      - name: Configure SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ env.SSH_KEY }}
+
+      - name: Prepare remote
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.SERVER_IP }} << 'EOF'
+            sudo apt update && sudo apt install -y docker.io docker-compose
+          EOF
+
+      - name: Deploy containers
+        run: |
+          scp -o StrictHostKeyChecking=no -r deploy ubuntu@${{ env.SERVER_IP }}:~/app/
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.SERVER_IP }} << 'EOF'
+            cd ~/app
+            docker-compose pull
+            docker-compose up -d
+          EOF

@@ -1,0 +1,39 @@
+name: "Test Wagtail Upgrade"
+env:
+  SSH_KEY: ${{ secrets.SSH_KEY }}
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  REGISTRY: ghcr.io
+  IMAGE: luoibac.studio
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Target Wagtail version'
+        required: true
+        default: '6.3.5'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build test image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./deploy/wagtail
+          file: ./deploy/wagtail/Dockerfile
+          load: true
+          tags: web:test
+          build-args: |
+            NEW_WAGTAIL_VERSION=${{ github.event.inputs.version }}
+
+      - name: Run migrations dry-run
+        run: |
+          docker run --rm -e DATABASE_URL=${{ secrets.POSTGRES_URL }} web:test \
+            bash -c "python manage.py makemigrations --dry-run && python manage.py migrate --plan"
+
+      - name: Collectstatic dry-run
+        run: |
+          docker run --rm -e DATABASE_URL=${{ secrets.POSTGRES_URL }} web:test \
+            python manage.py collectstatic --dry-run --noinput

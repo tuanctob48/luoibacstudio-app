@@ -1,0 +1,48 @@
+name: "Perform Wagtail Upgrade"
+env:
+  SSH_KEY: ${{ secrets.SSH_KEY }}
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  REGISTRY: ghcr.io
+  IMAGE: luoibac.studio
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Target Wagtail version'
+        required: true
+        default: '6.3.5'
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push new image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./deploy/wagtail
+          file: ./deploy/wagtail/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.event.inputs.version }}
+
+      - name: Configure SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ env.SSH_KEY }}
+
+      - name: Deploy upgrade
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ env.SERVER_IP }} << 'EOF'
+            cd ~/app
+            docker-compose pull web
+            docker-compose up -d --no-deps web
+          EOF
