@@ -21,8 +21,8 @@ jobs:
       - name: Build test image
         uses: docker/build-push-action@v4
         with:
-          context: ./deploy/wagtail
-          file: ./deploy/wagtail/Dockerfile
+          context: ./deploy/app_container
+          file: ./deploy/app_container/Dockerfile
           load: true
           tags: web:test
           build-args: |

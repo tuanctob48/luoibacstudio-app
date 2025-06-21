@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        SUPABASE_DB_URL: ${SUPPABASE_DB_URL}
+        DJANGO_SETTINGS_MODULE: luoibacstudio.settings.production
+    environment:
+      POSTGRES_DB: ${SUPPABASE_DB_NAME}
+      POSTGRES_USER: ${SUPPABASE_DB_USER}
+      POSTGRES_PASSWORD: ${SUPPABASE_DB_PASSWORD}
+      POSTGRES_HOST: ${SUPPABASE_DB_HOST}
+      POSTGRES_PORT: ${SUPPABASE_DB_PORT}
+      DJANGO_SETTINGS_MODULE: luoibacstudio.settings.production
+      SECRET_KEY: ${POSTGRES_SECRET_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./media:/app/luoibacstudio/media
+      - ./staticfiles:/app/luoibacstudio/staticfiles 

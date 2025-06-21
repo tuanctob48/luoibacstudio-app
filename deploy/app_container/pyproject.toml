@@ -1,0 +1,30 @@
+[project]
+name = "app-container"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "django>=5.2.3",
+    "gunicorn>=23.0.0",
+    "psycopg2-binary>=2.9.10",
+    "wagtail>=7.0.1",
+]
+
+[build-system]
+build-backend  = 'hatchling.build'
+requires       = ['hatchling']
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.build.targets.sdist]
+exclude = []
+
+[dependency-groups]
+dev = [
+    "pip>=25.1.1",
+]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""

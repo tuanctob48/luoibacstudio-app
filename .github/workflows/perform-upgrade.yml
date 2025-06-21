@@ -29,8 +29,8 @@ jobs:
       - name: Build and push new image
         uses: docker/build-push-action@v4
         with:
-          context: ./deploy/wagtail
-          file: ./deploy/wagtail/Dockerfile
+          context: ./deploy/app_container
+          file: ./deploy/app_container/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.event.inputs.version }}
 
